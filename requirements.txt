@@ -1,0 +1,8 @@
+streamlit
+python-dotenv
+PyPDF2
+langchain==0.1.17
+langchain-community==0.0.36
+langchain-google-genai==0.0.6
+faiss-cpu
+sentence-transformers
