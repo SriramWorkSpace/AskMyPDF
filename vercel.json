@@ -1,0 +1,18 @@
+{
+    "functions": {
+        "api/*.py": {
+            "runtime": "python3.11",
+            "maxDuration": 30
+        }
+    },
+    "routes": [
+        {
+            "src": "/api/ingest",
+            "dest": "/api/ingest.py"
+        },
+        {
+            "src": "/api/ask",
+            "dest": "/api/ask.py"
+        }
+    ]
+}

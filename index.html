@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AskMyPDF on Vercel</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            margin: 0;
+            background: #0f0f23;
+            color: #eee;
+        }
+
+        header {
+            padding: 24px;
+            background: #1a1a2e;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .card {
+            background: #161b2d;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input[type=file] {
+            color: #ddd;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #fff;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        .log {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            background: #0f1220;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .chat {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .msg {
+            padding: 10px 12px;
+            border-radius: 10px;
+        }
+
+        .user {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+        }
+
+        .assistant {
+            background: rgba(0, 255, 170, 0.1);
+            border-left: 3px solid #00ffaa;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>AskMyPDF – Vercel</h1>
+    </header>
+    <main>
+        <section class="card">
+            <h3>1) Upload PDFs</h3>
+            <div class="row" style="margin-top:8px;">
+                <input id="pdfs" type="file" multiple accept="application/pdf" />
+                <button id="ingestBtn">Process Documents</button>
+            </div>
+            <div style="margin-top:10px;">
+                <div>Session: <code id="sessionId">(none)</code></div>
+            </div>
+            <div class="log" id="ingestLog" style="margin-top:10px;"></div>
+        </section>
+
+        <section class="card">
+            <h3>2) Ask Questions</h3>
+            <div class="chat" id="chat"></div>
+            <div class="row" style="margin-top:8px;">
+                <input id="question" type="text" placeholder="Ask something about your PDFs..."
+                    style="flex:1; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:#0f1220; color:#eee;" />
+                <button id="askBtn" disabled>Ask</button>
+            </div>
+        </section>
+    </main>
+    <script>
+        const ingestBtn = document.getElementById('ingestBtn');
+        const askBtn = document.getElementById('askBtn');
+        const filesInput = document.getElementById('pdfs');
+        const ingestLog = document.getElementById('ingestLog');
+        const sessionEl = document.getElementById('sessionId');
+        const chat = document.getElementById('chat');
+        const questionEl = document.getElementById('question');
+
+        let sessionId = '';
+
+        function logIngest(msg) {
+            ingestLog.textContent = msg;
+        }
+
+        function addMsg(role, content) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.textContent = content;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        ingestBtn.addEventListener('click', async () => {
+            const files = filesInput.files;
+            if (!files || !files.length) {
+                logIngest('Please select at least one PDF.');
+                return;
+            }
+            ingestBtn.disabled = true;
+            logIngest('Uploading and processing...');
+            try {
+                const form = new FormData();
+                for (const f of files) form.append('files', f);
+                const res = await fetch('/api/ingest', { method: 'POST', body: form });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ingest failed');
+                sessionId = data.session_id;
+                sessionEl.textContent = sessionId;
+                logIngest(`OK. Chunks: ${data.chunks}`);
+                askBtn.disabled = false;
+            } catch (e) {
+                logIngest('Error: ' + (e?.message || e));
+            } finally {
+                ingestBtn.disabled = false;
+            }
+        });
+
+        askBtn.addEventListener('click', async () => {
+            const q = questionEl.value.trim();
+            if (!q) return;
+            addMsg('user', q);
+            questionEl.value = '';
+            askBtn.disabled = true;
+            try {
+                const res = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: q, session_id: sessionId })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ask failed');
+                addMsg('assistant', data.answer || '(no answer)');
+            } catch (e) {
+                addMsg('assistant', 'Error: ' + (e?.message || e));
+            } finally {
+                askBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
