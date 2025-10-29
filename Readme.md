@@ -80,3 +80,17 @@ Notes and limits:
 - Serverless functions are stateless; ingestion uses a generated session ID to isolate your vectors in Pinecone (namespace).
 - Timeouts may occur for very large PDFs; prefer smaller files or split uploads.
 - The original Streamlit app (`app.py`) remains for local usage; Vercel serves the static UI + APIs path.
+
+---
+
+🧪 Local development with FAISS (optional)
+
+If you want to run the original Streamlit app locally with FAISS, install the local extras:
+
+```powershell
+pip install -r requirements-local.txt
+$env:GOOGLE_API_KEY="your_api_key_here"
+streamlit run app.py
+```
+
+This keeps FAISS out of the Vercel deployment (smaller serverless bundle) while preserving your local workflow.

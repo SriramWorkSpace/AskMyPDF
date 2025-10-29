@@ -48,10 +48,46 @@ def chunk_text(text: str) -> List[str]:
     return splitter.split_text(text)
 
 
+def _list_index_names(pc) -> set:
+    names = set()
+    try:
+        res = pc.list_indexes()
+        # Try names() helper first
+        maybe_names = getattr(res, 'names', None)
+        if callable(maybe_names):
+            try:
+                for n in maybe_names() or []:
+                    names.add(n)
+            except Exception:
+                pass
+        # Fallbacks
+        items = getattr(res, 'indexes', None) or res
+        if isinstance(items, (list, tuple)):
+            for it in items:
+                if isinstance(it, str):
+                    names.add(it)
+                elif isinstance(it, dict):
+                    n = it.get('name')
+                    if n:
+                        names.add(n)
+                else:
+                    n = getattr(it, 'name', None)
+                    if n:
+                        names.add(n)
+    except Exception:
+        # As a last resort, attempt direct list
+        try:
+            for n in pc.list_indexes() or []:
+                if isinstance(n, str):
+                    names.add(n)
+        except Exception:
+            pass
+    return names
+
+
 def ensure_pinecone_index(pc, index_name: str, dim: int = 768) -> None:
-    existing = {i["name"] for i in pc.list_indexes()}
+    existing = _list_index_names(pc)
     if index_name not in existing:
-        # Default to AWS us-east-1 serverless; adjust via env if provided
         cloud = os.getenv("PINECONE_CLOUD", "aws")
         region = os.getenv("PINECONE_REGION", "us-east-1")
         pc.create_index(

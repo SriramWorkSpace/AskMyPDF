@@ -47,16 +47,33 @@ def ask():
 
         results = index.query(vector=qvec, top_k=top_k, include_metadata=True, namespace=session_id)
 
+        # Support both dict-like and object-like responses from the client
+        matches = None
+        if isinstance(results, dict):
+            matches = results.get('matches', [])
+        else:
+            matches = getattr(results, 'matches', [])
+
         contexts = []
         sources = []
-        for m in results.get('matches', []) or []:
-            meta = m.get('metadata', {}) or {}
-            text = meta.get('text', '')
+        for m in matches or []:
+            # m may be dict-like or object-like
+            meta = None
+            if isinstance(m, dict):
+                meta = m.get('metadata', {}) or {}
+                mid = m.get('id')
+                mscore = m.get('score')
+            else:
+                meta = getattr(m, 'metadata', {}) or {}
+                mid = getattr(m, 'id', None)
+                mscore = getattr(m, 'score', None)
+
+            text = (meta.get('text') if isinstance(meta, dict) else None) or ''
             if text:
                 contexts.append(text)
                 sources.append({
-                    "id": m.get('id'),
-                    "score": m.get('score'),
+                    "id": mid,
+                    "score": mscore,
                     "text": text[:300]
                 })
 
@@ -71,7 +88,15 @@ def ask():
         )
 
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
-        answer = llm.invoke(prompt).content
+        msg = llm.invoke(prompt)
+        content = getattr(msg, 'content', '')
+        if isinstance(content, list):
+            # Some providers return list-of-parts content
+            content = ''.join(
+                (part.get('text') if isinstance(part, dict) else str(part))
+                for part in content
+            )
+        answer = content or ""
 
         return jsonify({
             "answer": answer,
