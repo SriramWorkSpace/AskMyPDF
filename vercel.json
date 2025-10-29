@@ -8,6 +8,10 @@
     ],
     "routes": [
         {
+            "src": "/",
+            "dest": "/index.html"
+        },
+        {
             "src": "/api/ingest",
             "dest": "/api/ingest.py"
         },

@@ -98,9 +98,14 @@ def ensure_pinecone_index(pc, index_name: str, dim: int = 768) -> None:
         )
 
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
 def ingest():
     try:
+        if request.method == 'GET':
+            return jsonify({
+                "message": "Use POST with multipart/form-data. Field name: 'files' (one or more PDFs). Optional: 'session_id'",
+                "health": "/health"
+            })
         # Validate environment
         require_env("GOOGLE_API_KEY")
         pinecone_api_key = require_env("PINECONE_API_KEY")

@@ -18,9 +18,14 @@ def require_env(name: str) -> str:
     return value
 
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
 def ask():
     try:
+        if request.method == 'GET':
+            return jsonify({
+                "message": "Use POST with JSON: { 'question': string, 'session_id': string, 'top_k'?: number }",
+                "health": "/health"
+            })
         require_env("GOOGLE_API_KEY")
         pinecone_api_key = require_env("PINECONE_API_KEY")
         index_name = require_env("PINECONE_INDEX_NAME")
