@@ -1,4 +1,4 @@
-📄 Ask Your PDF
+📄 AskMyPDF
 
 An AI-driven Streamlit web app that lets you upload PDF files and interact with them using natural language. It harnesses the power of Google Gemini models and FAISS vector stores to interpret and respond to questions based on your PDF content.
 
