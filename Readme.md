@@ -1,10 +1,10 @@
-📄 AskMyPDF
+**📄 AskMyPDF**
 
 An AI-driven Streamlit web app that lets you upload PDF files and interact with them using natural language. It harnesses the power of Google Gemini models and FAISS vector stores to interpret and respond to questions based on your PDF content.
 
 ---
 
-🚀 Key Features
+**Key Features**
 
 - Support for multiple PDF uploads
 - Natural language chat powered by Gemini 1.5 Flash
@@ -17,7 +17,7 @@ Note: For Vercel deployment, this repo also includes a lightweight static fronte
 
 ---
 
-🧠 How It Works
+**How It Works**
 
 1. Upload PDFs from the sidebar
 
@@ -30,7 +30,7 @@ Note: For Vercel deployment, this repo also includes a lightweight static fronte
 
 ---
 
-📦 Setup Instructions
+**Setup Instructions**
 
 Install dependencies:
 pip install -r requirements.txt
@@ -43,7 +43,7 @@ streamlit run app.py
 
 ---
 
-🚀 Deploy to Vercel (Serverless APIs + Static UI)
+**Deploy to Vercel (Serverless APIs + Static UI)**
 
 What you'll get:
 - A static web UI at `/` (index.html)
@@ -83,7 +83,7 @@ Notes and limits:
 
 ---
 
-🧪 Local development with FAISS (optional)
+**Local development with FAISS (optional)**
 
 If you want to run the original Streamlit app locally with FAISS, install the local extras:
 
